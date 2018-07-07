@@ -1,18 +1,18 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Security.Authentication;
-using QlikView.Qvx.QvxLibrary;
-using System.Diagnostics;
-using Google.Cloud.Storage.V1;
-using Google.Apis.Auth.OAuth2;
-using Google.Apis.Storage.v1.Data;
+﻿using QlikView.Qvx.QvxLibrary;
+//using System;
+//using System.Collections.Generic;
+//using System.Linq;
+//using System.Text;
+//using System.Threading.Tasks;
+//using System.Security.Authentication;
+//using System.Diagnostics;
+//using Google.Cloud.Storage.V1;
+//using Google.Apis.Auth.OAuth2;
+//using Google.Apis.Storage.v1.Data;
 
-namespace QvEventLogConnectorSimple
+namespace QlikGoogleCloudConnector
 {
-    internal class QvEventLogServer : QvxServer
+    internal class QlikGoogleCloudConnectorServer : QvxServer
     {
         public override QvxConnection CreateConnection()
         {
@@ -28,7 +28,7 @@ namespace QvEventLogConnectorSimple
 
             //new QvEventLogConnection().Init();
             //new QvEventLogConnection().GetApplicationEvents();
-            return new QvEventLogConnection();
+            return new QlikGoogleCloudConnectorConnection();
             //new QvEventLogConnection().GetApplicationEvents();
             //return a;
         }

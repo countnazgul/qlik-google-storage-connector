@@ -4,11 +4,12 @@ using Google.Cloud.Storage.V1;
 using QlikView.Qvx.QvxLibrary;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.IO;
+//using System.Linq;
+//using System.Text;
+//using System.Threading.Tasks;
 
-namespace QvEventLogConnectorSimple
+namespace QlikGoogleCloudConnector
 {
     class StorageOperations
     {
@@ -115,6 +116,20 @@ namespace QvEventLogConnectorSimple
             };
         }
 
+        private void DownloadObject(string bucketName, string objectName, string localPath = null)
+        {
 
+            var credential = GoogleCredential.FromFile(@"c:\Users\Administrator\Desktop\local-shoreline-645-b36405e68311.json");
+            var storage = StorageClient.Create(credential);
+            //var buckets = storage.ListBuckets("local-shoreline-645");
+
+            //var storage = StorageClient.Create();
+            localPath = localPath ?? Path.GetFileName(objectName);
+            using (var outputFile = File.OpenWrite(localPath))
+            {
+                storage.DownloadObject(bucketName, objectName, outputFile);
+            }
+            Console.WriteLine($"downloaded {objectName} to {localPath}.");
+        }
     }
 }

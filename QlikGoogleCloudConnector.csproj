@@ -8,8 +8,8 @@
     <ProjectGuid>{6D00D6A1-12CB-487C-865C-58ED2C6AB272}</ProjectGuid>
     <OutputType>WinExe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>QvEventLogConnectorSimple</RootNamespace>
-    <AssemblyName>QvEventLogConnectorSimple</AssemblyName>
+    <RootNamespace>QlikGoogleCloudConnector</RootNamespace>
+    <AssemblyName>QlikGoogleCloudConnector</AssemblyName>
     <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
     <TargetFrameworkProfile>
     </TargetFrameworkProfile>
@@ -137,10 +137,10 @@
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
       <DependentUpon>Settings.settings</DependentUpon>
     </Compile>
-    <Compile Include="QvEventLogConnection.cs" />
+    <Compile Include="QlikGoogleCloudConnectorConnection.cs" />
     <Compile Include="StorageOperations.cs" />
     <Content Include="web\QvEventLogServer_old.c" />
-    <Compile Include="QvEventLogServer.cs" />
+    <Compile Include="QlikGoogleCloudConnectorServer.cs" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Properties\Resources.resx">
