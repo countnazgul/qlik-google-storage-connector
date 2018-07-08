@@ -5,12 +5,12 @@ using System.Runtime.InteropServices;
 // General Information about an assembly is controlled through the following 
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("Qlik GCP Storage Connector")]
-[assembly: AssemblyDescription("Qlik Custom Connector for interaction with Google Cloud Storage")]
+[assembly: AssemblyTitle("GCP Storage Connector")]
+[assembly: AssemblyDescription("Custom Connector for Qlik for interaction with Google Cloud Storage")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("stefan.stoichev@gmail.com")]
 [assembly: AssemblyProduct("https://github.com/countnazgul/qlik-google-storage-connector")]
-[assembly: AssemblyCopyright("Copyright © DLS 2018")]
+[assembly: AssemblyCopyright("stefan.stoichev@gmail.com")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
@@ -32,5 +32,5 @@ using System.Runtime.InteropServices;
 // You can specify all the values or you can default the Build and Revision Numbers 
 // by using the '*' as shown below:
 // [assembly: AssemblyVersion("1.0.*")]
-[assembly: AssemblyVersion("0.0.1.0")]
-[assembly: AssemblyFileVersion("0.0.1.0")]
+[assembly: AssemblyVersion("0.0.2.0")]
+[assembly: AssemblyFileVersion("0.0.2.0")]

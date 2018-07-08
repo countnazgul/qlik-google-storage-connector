@@ -5,35 +5,32 @@ using QlikView.Qvx.QvxLibrary;
 using System;
 using System.Collections.Generic;
 using System.IO;
-//using System.Linq;
-//using System.Text;
-//using System.Threading.Tasks;
+using System.Web.Script.Serialization;
 
 namespace QlikGoogleCloudConnector
 {
     class StorageOperations
     {
-        public static string Test()
+        public static QvxDataTable ListBuckets(QvxTable bucketsTable, IDictionary<string, string> fields, string jsonCredentials)
         {
-            return "123";
-        }
-
-        public static QvxDataTable ListBuckets(string projectId, QvxTable bucketsTable)
-        {
-            bucketsTable.GetRows = ListBucketsRows(projectId, bucketsTable);
+            bucketsTable.GetRows = ListBucketsRows(bucketsTable, fields, jsonCredentials);
 
             return new QvxDataTable(bucketsTable);
         }
 
-        public static QvxTable.GetRowsHandler ListBucketsRows(string projectId, QvxTable table)
+        public static QvxTable.GetRowsHandler ListBucketsRows(QvxTable table, IDictionary<string, string> fields, string jsonCredentials)
         {
+            var JSONObj = new JavaScriptSerializer().Deserialize<Dictionary<string, string>>(jsonCredentials);
+            string GCPProjectId = JSONObj["project_id"];
+
             return () =>
             {
                 List<QvxDataRow> rows = new List<QvxDataRow>();
 
-                var credential = GoogleCredential.FromFile(@"c:\Users\Administrator\Desktop\local-shoreline-645-b36405e68311.json");
+                var credential = GoogleCredential.FromJson(jsonCredentials);
                 var storage = StorageClient.Create(credential);
-                var buckets = storage.ListBuckets(projectId);
+
+                var buckets = storage.ListBuckets(GCPProjectId);
 
                 foreach (Bucket bucket in buckets)
                 {
@@ -54,27 +51,31 @@ namespace QlikGoogleCloudConnector
                     rows.Add(row);
                 }
 
-
-
                 return rows;
             };
         }
 
-        public static QvxDataTable ListBucketObjects(string bucketName, QvxTable bucketObjectsTable)
+
+
+        public static QvxDataTable ListBucketObjects(QvxTable bucketObjectsTable, IDictionary<string, string> fields, string jsonCredentials)
         {
-            bucketObjectsTable.GetRows = ListBucketObjectsRows(bucketName, bucketObjectsTable);
+            bucketObjectsTable.GetRows = ListBucketObjectsRows(fields, bucketObjectsTable, jsonCredentials);
 
             return new QvxDataTable(bucketObjectsTable);
         }
 
-        public static QvxTable.GetRowsHandler ListBucketObjectsRows(string bucketName, QvxTable table)
+        public static QvxTable.GetRowsHandler ListBucketObjectsRows(IDictionary<string, string> fields, QvxTable table, string jsonCredentials)
         {
             return () =>
             {
                 List<QvxDataRow> rows = new List<QvxDataRow>();
 
-                var credential = GoogleCredential.FromFile(@"c:\Users\Administrator\Desktop\local-shoreline-645-b36405e68311.json");
+                //var credential = GoogleCredential.FromFile(@"c:\Users\Administrator\Desktop\local-shoreline-645-b36405e68311.json");
+                var credential = GoogleCredential.FromJson(jsonCredentials);
                 var storage = StorageClient.Create(credential);
+
+                fields.TryGetValue("bucketname", out string bucketName);
+
                 var bucketObjects = storage.ListObjects(bucketName, null, null);
 
 
@@ -116,20 +117,40 @@ namespace QlikGoogleCloudConnector
             };
         }
 
-        private void DownloadObject(string bucketName, string objectName, string localPath = null)
+
+
+        public static QvxDataTable DownloadObject(QvxTable downloadObjectTable, IDictionary<string, string> fields, string jsonCredentials)
         {
-
-            var credential = GoogleCredential.FromFile(@"c:\Users\Administrator\Desktop\local-shoreline-645-b36405e68311.json");
+            var credential = GoogleCredential.FromJson(jsonCredentials);
             var storage = StorageClient.Create(credential);
-            //var buckets = storage.ListBuckets("local-shoreline-645");
 
-            //var storage = StorageClient.Create();
+            fields.TryGetValue("bucketname", out string bucketName);
+            fields.TryGetValue("objectname", out string objectName);
+            fields.TryGetValue("localpath", out string localPath);
+
+            QvxLog.Log(QvxLogFacility.Application, QvxLogSeverity.Notice,  String.Format(" ------>>>>>>>>>>> {0}, {1}, {2}", bucketName, objectName, localPath));
             localPath = localPath ?? Path.GetFileName(objectName);
             using (var outputFile = File.OpenWrite(localPath))
             {
                 storage.DownloadObject(bucketName, objectName, outputFile);
             }
-            Console.WriteLine($"downloaded {objectName} to {localPath}.");
+            downloadObjectTable.GetRows = DownloadObjectRows(downloadObjectTable);
+            return new QvxDataTable(downloadObjectTable);
+
+        }
+
+        public static QvxTable.GetRowsHandler DownloadObjectRows(QvxTable table)
+        {
+            return () =>
+            {
+                List<QvxDataRow> rows = new List<QvxDataRow>();
+
+                var row = new QvxDataRow();
+                row[table.Fields[0]] = "Dummy Value. This table can be dropped from the data model.";
+                rows.Add(row);
+                
+                return rows;
+            };
         }
     }
 }

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;   
 using QlikView.Qvx.QvxLibrary;
@@ -14,11 +15,21 @@ namespace QlikGoogleCloudConnector
 {
     internal class QlikGoogleCloudConnectorConnection : QvxConnection
     {
+        string jsonPath = "";
+        string jsonCredentials = "";
+        string GCPProjectId = "";
         public override void Init()
         {
             QvxLog.SetLogLevels(true, true);
 
             QvxLog.Log(QvxLogFacility.Application, QvxLogSeverity.Notice, "Init()");
+            
+            this.MParameters.TryGetValue("jsonPath", out jsonPath);
+            jsonCredentials = File.ReadAllText(jsonPath);
+
+
+
+            QvxLog.Log(QvxLogFacility.Application, QvxLogSeverity.Notice, jsonCredentials);
 
             var bucketsListFields = new QvxField[]
                 {
@@ -73,6 +84,11 @@ namespace QlikGoogleCloudConnector
                     //new QvxField("Updated", QvxFieldType.QVX_SIGNED_INTEGER, QvxNullRepresentation.QVX_NULL_FLAG_SUPPRESS_DATA, FieldAttrType.ASCII),
                 };
 
+            var dummyFields = new QvxField[]
+            {
+                    new QvxField("DummyField", QvxFieldType.QVX_TEXT, QvxNullRepresentation.QVX_NULL_FLAG_SUPPRESS_DATA, FieldAttrType.ASCII)
+            };
+
             MTables = new List<QvxTable>
                 {
                     new QvxTable
@@ -86,6 +102,21 @@ namespace QlikGoogleCloudConnector
                             TableName = "BucketObjects",
                             //GetRows = GetBucketObjects,
                             Fields = objectFields
+                        },
+                    new QvxTable
+                        {
+                            TableName = "DownloadObject",
+                            Fields = dummyFields
+                        },
+                    new QvxTable
+                        {
+                            TableName = "UploadObject",
+                            Fields = dummyFields
+                        },
+                    new QvxTable
+                        {
+                            TableName = "DeleteLocalObject",
+                            Fields = dummyFields
                         }
                 };
         }
@@ -130,20 +161,26 @@ namespace QlikGoogleCloudConnector
                 b = b.ToLower();
                 b = b.Replace("where", "");
 
+                //QvxLog.Log(QvxLogFacility.Application, QvxLogSeverity.Notice, b);
+
                 var c = b.Split(new[] { "and" }, StringSplitOptions.None);
 
                 for (int i = 0; i < c.Length; i++)
                 {
                     var f = c[i].Trim();
                     var g = f.Split('=');
+                    
+                    string value = g[1];
+                    value = value.Replace("=", "").Trim();
+                    value = value.Replace("'", "");
 
-                    dict.Add(g[0].Trim(), g[1].Replace("=", "").Trim());
+                    dict.Add(g[0].Trim(), value.Trim());
                 }
 
             }
             catch (Exception ex)
             {
-                throw new QvxPleaseSendReplyException(QvxResult.QVX_UNKNOWN_COMMAND, ex.Message);
+                throw new QvxPleaseSendReplyException(QvxResult.QVX_UNKNOWN_COMMAND, String.Format("Error parsing the WHERE clause. WHERE clause is present?"));
             }
 
             if (dict.Count == 0)
@@ -156,104 +193,44 @@ namespace QlikGoogleCloudConnector
 
         public override QvxDataTable ExtractQuery(string line, List<QvxTable> qvxTables)
         {
-
-            //DownloadObject("countnazgul-test", "dbip-isp-000.csv", @"c:\GCP_TEST\dbip-isp-000.csv");
-            //DownloadObject("countnazgul-test", "code/WebService.zip", @"c:\GCP_TEST\WebService.zip");
-
             string tableName = GetTableName(line);
-            //IDictionary<string, string> dict = GetWhereFields(line);
+            IDictionary<string, string> fields = GetWhereFields(line);
             QvxDataTable returnTable = null;
-            QvxLog.Log(QvxLogFacility.Application, QvxLogSeverity.Notice, tableName);
+
+            //foreach (KeyValuePair<string, string> field in fields)
+            //{
+            //    QvxLog.Log(QvxLogFacility.Application, QvxLogSeverity.Notice, " ------>>>>>>>>>>> " + field.Key + "   " + field.Value );
+            //}
+
             switch (tableName)
             {
                 case "listbuckets":
-                    QvxDataTable a = StorageOperations.ListBuckets("local-shoreline-645", FindTable("ListBuckets", MTables));
+                    QvxDataTable a = StorageOperations.ListBuckets(FindTable("ListBuckets", MTables), fields, jsonCredentials);
                     returnTable = a;
                     break;
                 case "bucketobjects":
-                    QvxDataTable a1 = StorageOperations.ListBucketObjects("countnazgul-test", FindTable("BucketObjects", MTables));
+                    QvxDataTable a1 = StorageOperations.ListBucketObjects(FindTable("BucketObjects", MTables), fields, jsonCredentials);
                     returnTable = a1;
+                    break;
+                case "downloadobject":
+                    QvxDataTable downloadObj = StorageOperations.DownloadObject(FindTable("DownloadObject", MTables), fields, jsonCredentials);
+                        //ListBucketObjects(FindTable("BucketObjects", MTables), fields, jsonCredentials);
+                    returnTable = downloadObj;
+                    //DownloadObject("countnazgul-test", "dbip-isp-000.csv", @"c:\GCP_TEST\dbip-isp-000.csv");
+                    //DownloadObject("countnazgul-test", "code/WebService.zip", @"c:\GCP_TEST\WebService.zip");
+                    break;
+                case "uploadobject":
+                    // TBA
+                    break;
+                case "deletelocalobject":
+                    // TBA
                     break;
                 default:
                     throw new QvxPleaseSendReplyException(QvxResult.QVX_UNKNOWN_COMMAND, "Please provide WHERE clause");
-                    break;
                     
             }
 
             return returnTable;
-            //if (dict.Count == 0)
-            //{
-            //    //QvxReply t = new QvxReply();
-            //    //t.ErrorMessage = "aaaaaaaaaaaaaaaaaa";
-            //    throw new QvxPleaseSendReplyException(QvxResult.QVX_UNKNOWN_COMMAND, "Please provide WHERE clause");
-            //    //throw new Exception("Please provide WHERE clause");
-
-            //    var errorFields = new QvxField[]
-            //        {
-            //        new QvxField("Message", QvxFieldType.QVX_TEXT, QvxNullRepresentation.QVX_NULL_FLAG_SUPPRESS_DATA, FieldAttrType.ASCII)
-            //        };
-
-            //    QvxTable errorTable = new QvxTable
-            //    {
-            //        TableName = "Error",
-            //        Fields = errorFields
-            //    };
-
-            //    errorTable.GetRows = errorRows("Please provide WHERE clause", errorTable);
-
-            //    //MTables.Add(errorTable);
-
-            //    return new QvxDataTable(errorTable);
-            //} else
-            //{
-            //    return new QvxDataTable(qvxTables[1]);
-            //}
-
-            //switch (tableName)
-            //{
-            //    case "Buckets":
-
-            //        break;
-            //}
-
-
-
-            //var bucketsListFields = new QvxField[]
-            //    {
-            //        new QvxField("Acl", QvxFieldType.QVX_TEXT, QvxNullRepresentation.QVX_NULL_FLAG_SUPPRESS_DATA, FieldAttrType.ASCII),
-            //        new QvxField("Billing", QvxFieldType.QVX_TEXT, QvxNullRepresentation.QVX_NULL_FLAG_SUPPRESS_DATA, FieldAttrType.ASCII),
-            //        new QvxField("Cors", QvxFieldType.QVX_TEXT, QvxNullRepresentation.QVX_NULL_FLAG_SUPPRESS_DATA, FieldAttrType.ASCII),
-            //        new QvxField("ETag", QvxFieldType.QVX_TEXT, QvxNullRepresentation.QVX_NULL_FLAG_SUPPRESS_DATA, FieldAttrType.ASCII),
-            //        new QvxField("Encryption", QvxFieldType.QVX_TEXT, QvxNullRepresentation.QVX_NULL_FLAG_SUPPRESS_DATA, FieldAttrType.ASCII),
-            //        new QvxField("Id", QvxFieldType.QVX_TEXT, QvxNullRepresentation.QVX_NULL_FLAG_SUPPRESS_DATA, FieldAttrType.ASCII),
-            //        new QvxField("Kind", QvxFieldType.QVX_TEXT, QvxNullRepresentation.QVX_NULL_FLAG_SUPPRESS_DATA, FieldAttrType.ASCII),
-            //        new QvxField("Label", QvxFieldType.QVX_TEXT, QvxNullRepresentation.QVX_NULL_FLAG_SUPPRESS_DATA, FieldAttrType.ASCII),
-            //        new QvxField("Lifecycle", QvxFieldType.QVX_TEXT, QvxNullRepresentation.QVX_NULL_FLAG_SUPPRESS_DATA, FieldAttrType.ASCII),
-            //        new QvxField("Location", QvxFieldType.QVX_TEXT, QvxNullRepresentation.QVX_NULL_FLAG_SUPPRESS_DATA, FieldAttrType.ASCII),
-            //        new QvxField("Logging", QvxFieldType.QVX_TEXT, QvxNullRepresentation.QVX_NULL_FLAG_SUPPRESS_DATA, FieldAttrType.ASCII),
-            //        new QvxField("Name", QvxFieldType.QVX_TEXT, QvxNullRepresentation.QVX_NULL_FLAG_SUPPRESS_DATA, FieldAttrType.ASCII),
-            //        new QvxField("Owner", QvxFieldType.QVX_TEXT, QvxNullRepresentation.QVX_NULL_FLAG_SUPPRESS_DATA, FieldAttrType.ASCII)
-            //    };
-
-            //QvxTable table = new QvxTable
-            //{
-            //    TableName = "NewTable",
-            //    Fields = bucketsListFields
-            //};
-
-            //table.GetRows = mapRows("TEST", table);
-
-            //MTables.Add(table);
-
-            //QvxLog.Log(QvxLogFacility.Application, QvxLogSeverity.Notice, qvxTables[1].TableName.ToString());
-            //query = Regex.Replace(query, "\\\"", "'");
-
-            //return new QvxDataTable(qvxTables[1]);
-
-
-            //return null;
-            //return base.ExtractQuery(query, qvxTables);
-            //return new QvxDataTable(new QvxTable() { TableName = "Error" });
         }
     }
 }

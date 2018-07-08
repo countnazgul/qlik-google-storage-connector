@@ -1,4 +1,6 @@
 ﻿using QlikView.Qvx.QvxLibrary;
+using System;
+using System.Windows.Interop;
 //using System;
 //using System.Collections.Generic;
 //using System.Linq;
@@ -35,59 +37,82 @@ namespace QlikGoogleCloudConnector
 
         public override string CreateConnectionString()
         {
-            return "Server=localhost";
+            //return "Server=localhost";
+
+            var login = CreateLoginWindowHelper();
+            login.ShowDialog();
+
+            string connectionString = null;
+            if (login.DialogResult.Equals(true))
+            {
+                //connectionString = String.Format("Server={0};UserId={1};Password={2}",
+                //    login.GetServer(), login.GetUsername(), login.GetPassword());
+                connectionString = String.Format("jsonPath={0}", login.GetJSONPath());
+            }
+
+            return connectionString;
         }
 
+        private Login CreateLoginWindowHelper()
+        {
+            // Since the owner of the loginWindow is a Win32 process we need to
+            // use WindowInteropHelper to make it modal to its owner.
+            var login = new Login();
+            var wih = new WindowInteropHelper(login);
+            wih.Owner = MParentWindow;
+
+            return login;
+        }
 
         /**
          * QlikView 12 classes
          */
 
-        public override string HandleJsonRequest(string method, string[] userParameters, QvxConnection connection)
-        {
-            QvDataContractResponse response;
+        //public override string HandleJsonRequest(string method, string[] userParameters, QvxConnection connection)
+        //{
+        //    QvDataContractResponse response;
 
-            /**
-             * -- How to get hold of connection details? --
-             *
-             * Provider, username and password are always available in
-             * connection.MParameters if they exist in the connection
-             * stored in the QlikView Repository Service (QRS).
-             *
-             * If there are any other user/connector defined parameters in the
-             * connection string they can be retrieved in the same way as seen
-             * below
-             */
+        //    /**
+        //     * -- How to get hold of connection details? --
+        //     *
+        //     * Provider, username and password are always available in
+        //     * connection.MParameters if they exist in the connection
+        //     * stored in the QlikView Repository Service (QRS).
+        //     *
+        //     * If there are any other user/connector defined parameters in the
+        //     * connection string they can be retrieved in the same way as seen
+        //     * below
+        //     */
 
-            string provider, host, username, password;
-            connection.MParameters.TryGetValue("provider", out provider); // Set to the name of the connector by QlikView Engine
-            connection.MParameters.TryGetValue("userid", out username); // Set when creating new connection or from inside the QlikView Management Console (QMC)
-            connection.MParameters.TryGetValue("password", out password); // Same as for username
-            connection.MParameters.TryGetValue("host", out host); // Defined when calling createNewConnection in connectdialog.js
+        //    string provider, host, username, password;
+        //    connection.MParameters.TryGetValue("provider", out provider); // Set to the name of the connector by QlikView Engine
+        //    connection.MParameters.TryGetValue("userid", out username); // Set when creating new connection or from inside the QlikView Management Console (QMC)
+        //    connection.MParameters.TryGetValue("password", out password); // Same as for username
+        //    connection.MParameters.TryGetValue("host", out host); // Defined when calling createNewConnection in connectdialog.js
 
-            switch (method)
-            {
-                case "getInfo":
-                    response = getInfo();
-                    break;
-                case "getDatabases":
-                    response = getDatabases(username, password);
-                    break;
-                case "getTables":
-                    response = getTables(username, password, connection, userParameters[0], userParameters[1]);
-                    break;
-                case "getFields":
-                    response = getFields(username, password, connection, userParameters[0], userParameters[1], userParameters[2]);
-                    break;
-                case "testConnection":
-                    response = testConnection(userParameters[0], userParameters[1]);
-                    break;
-                default:
-                    response = new Info { qMessage = "Unknown command" };
-                    break;
-            }
-            return ToJson(response);    // serializes response into JSON string
-        }
+        //    switch (method)
+        //    {
+        //        case "getInfo":
+        //            response = getInfo();
+        //            break;
+        //        case "getDatabases":
+        //            response = getDatabases(username, password);
+        //            break;
+        //        case "getTables":
+        //            response = getTables(username, password, connection, userParameters[0], userParameters[1]);
+        //            break;
+        //        case "getFields":
+        //            response = getFields(username, password, connection, userParameters[0], userParameters[1], userParameters[2]);
+        //            break;
+        //        case "testConnection":
+        //            response = testConnection(userParameters[0], userParameters[1]);
+        //            break;
+        //        default:
+        //            response = new Info { qMessage = "Unknown command" };
+        //            break;
+        //    }
+        //    return ToJson(response);    // serializes response into JSON string
+        //}
 
         public bool verifyCredentials(string username, string password)
         {
