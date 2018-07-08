@@ -128,7 +128,7 @@ namespace QlikGoogleCloudConnector
             fields.TryGetValue("objectname", out string objectName);
             fields.TryGetValue("localpath", out string localPath);
 
-            QvxLog.Log(QvxLogFacility.Application, QvxLogSeverity.Notice,  String.Format(" ------>>>>>>>>>>> {0}, {1}, {2}", bucketName, objectName, localPath));
+            //QvxLog.Log(QvxLogFacility.Application, QvxLogSeverity.Notice,  String.Format(" ------>>>>>>>>>>> {0}, {1}, {2}", bucketName, objectName, localPath));
             localPath = localPath ?? Path.GetFileName(objectName);
             using (var outputFile = File.OpenWrite(localPath))
             {

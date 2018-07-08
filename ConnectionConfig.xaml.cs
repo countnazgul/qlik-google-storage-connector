@@ -10,9 +10,9 @@ namespace QlikGoogleCloudConnector
     /// <summary>
     /// Interaction logic for Login.xaml
     /// </summary>
-    public partial class Login : Window
+    public partial class ConnectionConfig : Window
     {
-        public Login()
+        public ConnectionConfig()
         {
             InitializeComponent();
         }
