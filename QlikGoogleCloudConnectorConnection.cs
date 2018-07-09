@@ -4,6 +4,9 @@ using System.Collections.Generic;
 using System.Text.RegularExpressions;   
 using QlikView.Qvx.QvxLibrary;
 
+//QvxLog.Log(QvxLogFacility.Application, QvxLogSeverity.Notice, "Init()");
+//throw new QvxPleaseSendReplyException(QvxResult.QVX_UNKNOWN_COMMAND, "Please provide WHERE clause");
+
 namespace QlikGoogleCloudConnector
 {
     internal class QlikGoogleCloudConnectorConnection : QvxConnection
@@ -18,7 +21,15 @@ namespace QlikGoogleCloudConnector
             QvxLog.Log(QvxLogFacility.Application, QvxLogSeverity.Notice, "Init()");
             
             this.MParameters.TryGetValue("jsonPath", out jsonPath);
-            jsonCredentials = File.ReadAllText(jsonPath);
+
+            try
+            {
+                jsonCredentials = File.ReadAllText(jsonPath);
+            } catch (Exception ex)
+            {
+                QvxLog.Log(QvxLogFacility.Application, QvxLogSeverity.Error, ex.Message);
+                throw new QvxPleaseSendReplyException(QvxResult.QVX_UNKNOWN_ERROR, String.Format("Unable to read {0}", jsonPath));
+            }
 
             var bucketsListFields = new QvxField[]
                 {
@@ -108,78 +119,10 @@ namespace QlikGoogleCloudConnector
                 };
         }
 
-
-
-        private string GetTableName(string query)
-        {
-            string tableName = "";
-
-            var r = new Regex(@"(from|join)\s+(?<table>\S+)", RegexOptions.IgnoreCase);
-
-            Match m = r.Match(query);
-            while (m.Success)
-            {
-                tableName = m.Groups["table"].Value;
-                m = m.NextMatch();
-            }
-
-            if( tableName.Length == 0)
-            {
-                throw new QvxPleaseSendReplyException(QvxResult.QVX_TABLE_NOT_FOUND, "Table name is rquired");
-            }
-
-
-            QvxTable a = FindTable(tableName, MTables);
-            if(a == null)
-            {
-                throw new QvxPleaseSendReplyException(QvxResult.QVX_UNKNOWN_COMMAND, String.Format("Table '{0}' not found", tableName));
-            }
-
-            return tableName.ToLower();
-        }
-
-        private IDictionary<string, string> GetWhereFields(string query)
-        {
-            IDictionary<string, string> dict = new Dictionary<string, string>();
-
-            try
-            {
-                var b = query.Substring(query.ToLower().IndexOf("where"));
-                b = b.ToLower();
-                b = b.Replace("where", "");
-
-                var c = b.Split(new[] { "and" }, StringSplitOptions.None);
-
-                for (int i = 0; i < c.Length; i++)
-                {
-                    var f = c[i].Trim();
-                    var g = f.Split('=');
-                    
-                    string value = g[1];
-                    value = value.Replace("=", "").Trim();
-                    value = value.Replace("'", "");
-
-                    dict.Add(g[0].Trim(), value.Trim());
-                }
-
-            }
-            catch (Exception ex)
-            {
-                throw new QvxPleaseSendReplyException(QvxResult.QVX_UNKNOWN_COMMAND, String.Format("Error parsing the WHERE clause. WHERE clause is present?"));
-            }
-
-            if (dict.Count == 0)
-            {
-                throw new QvxPleaseSendReplyException(QvxResult.QVX_UNKNOWN_COMMAND, "Please provide WHERE clause");
-            }
-
-                return dict;
-        }
-
         public override QvxDataTable ExtractQuery(string line, List<QvxTable> qvxTables)
         {
-            string tableName = GetTableName(line);
-            IDictionary<string, string> fields = GetWhereFields(line);
+            string tableName = Parsers.GetTableName(line, MTables);
+            IDictionary<string, string> fields = Parsers.GetWhereFields(line, tableName);
             QvxDataTable returnTable = null;
 
 
@@ -199,10 +142,12 @@ namespace QlikGoogleCloudConnector
                     break;
                 case "uploadobject":
                     // TBA
-                    break;
+                    throw new QvxPleaseSendReplyException(QvxResult.QVX_UNKNOWN_COMMAND, "Not implemented yet :(");
+                    //break;
                 case "deletelocalobject":
                     // TBA
-                    break;
+                    throw new QvxPleaseSendReplyException(QvxResult.QVX_UNKNOWN_COMMAND, "Not implemented yet :(");
+                    //break;
                 default:
                     throw new QvxPleaseSendReplyException(QvxResult.QVX_UNKNOWN_COMMAND, "Please provide WHERE clause");
                     
