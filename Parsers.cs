@@ -73,12 +73,13 @@ namespace QlikGoogleCloudConnector
             }
             catch (Exception ex)
             {
+                QvxLog.Log(QvxLogFacility.Application, QvxLogSeverity.Error, ex.Message);
                 throw new QvxPleaseSendReplyException(QvxResult.QVX_UNKNOWN_COMMAND, String.Format("Error parsing the WHERE clause. WHERE clause is present?"));
             }
 
             if (dict.Count == 0 && tableName != "listbuckets")
             {
-                throw new QvxPleaseSendReplyException(QvxResult.QVX_UNKNOWN_COMMAND, "WHERE clause is required. PLease read the documentation");
+                throw new QvxPleaseSendReplyException(QvxResult.QVX_UNKNOWN_COMMAND, "WHERE clause is required. Please read the documentation");
             }
 
             return dict;

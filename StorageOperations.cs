@@ -11,14 +11,14 @@ namespace QlikGoogleCloudConnector
 {
     class StorageOperations
     {
-        public static QvxDataTable ListBuckets(QvxTable bucketsTable, IDictionary<string, string> fields, string jsonCredentials)
+        public static QvxDataTable ListBuckets(QvxTable bucketsTable,  string jsonCredentials)
         {
-            bucketsTable.GetRows = ListBucketsRows(bucketsTable, fields, jsonCredentials);
+            bucketsTable.GetRows = ListBucketsRows(bucketsTable, jsonCredentials);
 
             return new QvxDataTable(bucketsTable);
         }
 
-        public static QvxTable.GetRowsHandler ListBucketsRows(QvxTable table, IDictionary<string, string> fields, string jsonCredentials)
+        public static QvxTable.GetRowsHandler ListBucketsRows(QvxTable table, string jsonCredentials)
         {
             string GCPProjectId = "";
 

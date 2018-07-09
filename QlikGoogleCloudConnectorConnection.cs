@@ -122,14 +122,18 @@ namespace QlikGoogleCloudConnector
         public override QvxDataTable ExtractQuery(string line, List<QvxTable> qvxTables)
         {
             string tableName = Parsers.GetTableName(line, MTables);
-            IDictionary<string, string> fields = Parsers.GetWhereFields(line, tableName);
+            IDictionary<string, string> fields = null;
+
+            if (tableName != "listbuckets") {
+                fields = Parsers.GetWhereFields(line, tableName);
+            }
             QvxDataTable returnTable = null;
 
 
             switch (tableName)
             {
                 case "listbuckets":
-                    QvxDataTable a = StorageOperations.ListBuckets(FindTable("ListBuckets", MTables), fields, jsonCredentials);
+                    QvxDataTable a = StorageOperations.ListBuckets(FindTable("ListBuckets", MTables), jsonCredentials);
                     returnTable = a;
                     break;
                 case "bucketobjects":
