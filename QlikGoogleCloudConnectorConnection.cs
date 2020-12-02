@@ -19,8 +19,17 @@ namespace QlikGoogleCloudConnector
             QvxLog.SetLogLevels(false, true);
 
             QvxLog.Log(QvxLogFacility.Application, QvxLogSeverity.Notice, "Init()");
-            
-            this.MParameters.TryGetValue("jsonPath", out jsonPath);
+
+            try
+            {
+                foreach (var item in this.MParameters.Values)
+                {
+                    jsonPath = item.ToString();
+                }
+            } catch(Exception ex)
+            {
+                QvxLog.Log(QvxLogFacility.Application, QvxLogSeverity.Notice, ex.Message);
+            }
 
             try
             {
@@ -28,7 +37,7 @@ namespace QlikGoogleCloudConnector
             } catch (Exception ex)
             {
                 QvxLog.Log(QvxLogFacility.Application, QvxLogSeverity.Error, ex.Message);
-                throw new QvxPleaseSendReplyException(QvxResult.QVX_UNKNOWN_ERROR, String.Format("Unable to read {0}", jsonPath));
+                //throw new QvxPleaseSendReplyException(QvxResult.QVX_UNKNOWN_ERROR, String.Format("Unable to read {0}", jsonPath));
             }
 
             var bucketsListFields = new QvxField[]

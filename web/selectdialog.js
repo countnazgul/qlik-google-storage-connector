@@ -29,7 +29,8 @@
 				} );
 			},
 			getFields: function ( qDatabaseName, qOwnerName, qTableName ) {
-				return serverside.sendJsonRequest( "getFields", qDatabaseName, qOwnerName, qTableName ).then( function ( response ) {
+				console.log(qTableName)
+				return serverside.sendJsonRequest( "getFields", qTableName ).then( function ( response ) {
 					return response.qFields;
 				} );
 			},

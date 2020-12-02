@@ -1,6 +1,6 @@
 ﻿define( ['qvangular',
-		'text!QvEventLogConnectorSimple.webroot/connectdialog.ng.html',
-		'css!QvEventLogConnectorSimple.webroot/connectdialog.css'
+		'text!QlikGoogleCloudConnector.webroot/connectdialog.ng.html',
+		'css!QlikGoogleCloudConnector.webroot/connectdialog.css'
 ], function ( qvangular, template) {
 	return {
 		template: template,
@@ -8,16 +8,17 @@
 			function init() {
 				$scope.isEdit = input.editMode;
 				$scope.id = input.instanceId;
-				$scope.titleText = $scope.isEdit ? "Change QV Event Log connection" : "Add QV Event Log connection";
+				$scope.titleText = $scope.isEdit ? "Change Google Cloud Storage connection" : "Add Google Cloud Storage connection";
 				$scope.saveButtonText = $scope.isEdit ? "Save changes" : "Create";
 
+				$scope.path = "";
 				$scope.name = "";
 				$scope.username = "";
 				$scope.password = "";
-				$scope.provider = "QvEventLogConnectorSimple.exe"; // Connector filename
+				$scope.provider = "QlikGoogleCloudConnector.exe"; // Connector filename
 				$scope.connectionInfo = "";
 				$scope.connectionSuccessful = false;
-				$scope.connectionString = createCustomConnectionString($scope.provider, "host=localhost;");
+				$scope.connectionString = createCustomConnectionString($scope.provider, $scope.path);
 
 				input.serverside.sendJsonRequest( "getInfo" ).then( function ( info ) {
 					$scope.info = info.qMessage;
@@ -25,7 +26,11 @@
 
 				if ( $scope.isEdit ) {
 					input.serverside.getConnection( $scope.id ).then( function ( result ) {
-						$scope.name = result.qName;
+						let cString = result.qConnection.qConnectionString.split('jsonPath=')[1]
+						cString = cString.replace(';', '').replace('"', '')
+
+						$scope.name = result.qConnection.qName;
+						$scope.path = cString;
 					} );
 				}
 			}
@@ -34,11 +39,14 @@
 			/* Event handlers */
 
 			$scope.onOKClicked = function () {
-				if ( $scope.isEdit ) {
+				var connString = createCustomConnectionString($scope.provider, $scope.path);
+				console.log(connString)
+
+				if ( $scope.isEdit ) {	
 					var overrideCredentials = ( $scope.username !== "" && $scope.password !== "" );
 					input.serverside.modifyConnection( $scope.id,
 						$scope.name,
-						$scope.connectionString,
+						connString ,
 						$scope.provider,
 						overrideCredentials,
 						$scope.username,
@@ -48,20 +56,20 @@
 							}
 						} );
 				} else {
-					input.serverside.createNewConnection( $scope.name, $scope.connectionString, $scope.username, $scope.password);
+					input.serverside.createNewConnection( $scope.name, connString , $scope.username, $scope.password);
 					$scope.destroyComponent();
 				}
 			};
 
 			$scope.onTestConnectionClicked = function () {
-				input.serverside.sendJsonRequest( "testConnection", $scope.username, $scope.password ).then( function ( info ) {
+				input.serverside.sendJsonRequest( "testConnection", $scope.path).then( function ( info ) {
 					$scope.connectionInfo = info.qMessage;
-					$scope.connectionSuccessful = info.qMessage.indexOf( "OK" ) !== -1;
+					$scope.connectionSuccessful = info.qMessage.indexOf( "successfully" ) !== -1;
 				} );
 			};
 
 			$scope.isOkEnabled = function () {
-				return $scope.name.length > 0 && $scope.connectionSuccessful;
+				return $scope.path.length > 0 && $scope.connectionSuccessful;
 			};
 
 			$scope.onEscape = $scope.onCancelClicked = function () {
@@ -71,8 +79,8 @@
 			
 			/* Helper functions */
 
-			function createCustomConnectionString ( filename, connectionstring ) {
-				return "CUSTOM CONNECT TO " + "\"provider=" + filename + ";" + connectionstring + "\"";
+			function createCustomConnectionString ( provider, connectionstring ) {
+				return "CUSTOM CONNECT TO " + "\"provider=" + provider + ";jsonPath=" + connectionstring + ";" + "\"";
 			}
 
 

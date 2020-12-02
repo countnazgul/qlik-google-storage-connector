@@ -3,7 +3,7 @@ using Google.Apis.Storage.v1.Data;
 using Google.Cloud.Storage.V1;
 using QlikView.Qvx.QvxLibrary;
 using System;
-using System.Collections.Generic;
+using System.Collections.Generic;   
 using System.IO;
 using System.Web.Script.Serialization;
 
@@ -48,7 +48,7 @@ namespace QlikGoogleCloudConnector
                 } catch (Exception ex)
                 {
                     QvxLog.Log(QvxLogFacility.Application, QvxLogSeverity.Error, ex.Message);
-                    throw new QvxPleaseSendReplyException(QvxResult.QVX_UNKNOWN_COMMAND, "Error getting the data from Google Storage");
+                    throw new QvxPleaseSendReplyException(QvxResult.QVX_UNKNOWN_COMMAND, ex.Message);
                 }
 
 
